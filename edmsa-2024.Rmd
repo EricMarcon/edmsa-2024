@@ -1,0 +1,500 @@
+---
+title: "Entropy-based Common Measures of Biodiversity and the Spatial Structure of  Economic Activity"
+author: "Eric Marcon"
+date: "May 17, 2024"
+url: https://EricMarcon.github.io/edmsa-2024/
+github-repo: EricMarcon/edmsa-2024
+bibliography: references.bib
+biblio-style: chicago
+urlcolor: blue
+output:
+  bookdown::beamer_presentation2:
+    latex_engine: xelatex
+    includes:
+      in_header: latex/header.tex
+    citation_package: natbib
+    slide_level: 2
+    df_print: kable
+    number_sections: no
+    toc: no
+    fig_caption: no
+    keep_tex: no
+  bookdown::slidy_presentation2:
+    slide_level: 2
+  bookdown::ioslides_presentation2:
+    logo: images/logo.png
+    widescreen: true
+  bookdown::powerpoint_presentation2:
+    slide_level: 2
+---
+
+```{r}
+#| label: DoNotModify
+#| include: false
+### Utilities. Do not modify.
+# Installation of packages if necessary
+InstallPackages <- function(Packages) {
+  InstallPackage <- function(Package) {
+    if (!Package %in% installed.packages()[, 1]) {
+      install.packages(Package, repos = "https://cran.rstudio.com/")
+    }
+  }
+  invisible(sapply(Packages, InstallPackage))
+}
+
+# Basic packages
+InstallPackages(c("bookdown", "formatR", "kableExtra", "ragg"))
+
+# kableExtra must be loaded 
+if (knitr::opts_knit$get("rmarkdown.pandoc.to") == "docx") {
+  # Word output (https://stackoverflow.com/questions/35144130/in-knitr-how-can-i-test-for-if-the-output-will-be-pdf-or-word)
+  # Do not use autoformat (https://github.com/haozhu233/kableExtra/issues/308)
+  options(kableExtra.auto_format = FALSE)
+}
+library("kableExtra")
+
+# Chunk font size hook: allows size='small' or any valid Latex font size in chunk options
+def.chunk.hook  <- knitr::knit_hooks$get("chunk")
+knitr::knit_hooks$set(chunk = function(x, options) {
+  x <- def.chunk.hook(x, options)
+  ifelse(options$size != "normalsize", paste0("\n \\", options$size,"\n\n", x, "\n\n \\normalsize"), x)
+})
+```
+
+```{r}
+#| label: Options
+#| include: false
+### Customized options for this document
+# Add necessary packages here
+Packages <- c("tidyverse", "entropart")
+# Install them
+InstallPackages(Packages)
+
+# knitr options
+knitr::opts_chunk$set(
+  cache =   FALSE,    # Cache chunk results
+  include = TRUE,     # Show/Hide chunks
+  echo =    FALSE,    # Show/Hide code
+  warning = FALSE,    # Show/Hide warnings
+  message = FALSE,    # Show/Hide messages
+  # Figure alignment and size
+  fig.align = 'center', out.width = '80%',
+  # Graphic devices (ragg_png is better than standard png)
+  dev = c("ragg_png", "pdf"),
+  # Code chunk format
+  tidy = TRUE, tidy.opts = list(blank = FALSE, width.cutoff = 50),
+  size = "scriptsize", knitr.graphics.auto_pdf = TRUE
+)
+options(width = 50)
+
+# ggplot style
+library("tidyverse")
+theme_set(theme_bw())
+theme_update(
+  panel.background = element_rect(fill = "transparent", colour = NA),
+  plot.background = element_rect(fill = "transparent", colour = NA)
+)
+knitr::opts_chunk$set(dev.args = list(bg = "transparent"))
+
+# Tibbles: 5 lines, fit to slide width
+options(tibble.print_min = 5, tibble.width = 50)
+
+# Random seed
+set.seed(973)
+```
+
+```{r}
+#| label: data
+#| include: false
+# Eurostat
+ES02Cx <- matrix(
+  c(
+    71924, 85083, 82510, 101575, 591468, 54896, 13827, 99482, 316141, 34627, 511130, 53238, 93254, 10526, 389447, 40054, 21647, 121943, 47741, 369885, 89958, 155573, 56948, 34427, 365056,
+    9319, 9814, 13298, 15301, 71327, 4523, 1516, 9001, 46813, 3260, 58383, 7105, 13301, 717, 37855, 3528, 2421, 6727, 3653, 22997, 14840, 17168, 5205, 4976, 36166,
+    8665, 17329, 12914, 25983, 73448, 3951, 4452, 7366, 40050, 3122, 38896, 4192, 14293, 274, 121725, 9061, 2962, 12130, 2734, 54119, 42995, 35531, 5297, 7202, 51477,
+    6212, 3495, 99974, 25717, 35275, 1611, 6052, 14148, 42550, 2214, 46451, 15480, 21528, 120, 196877, 20293, 9300, 3473, 1531, 87121, 88345, 156210, 1348, 15792, 28524,
+    32762, 11271, 17263, 54290, 92412, 9630, 17191, 5867, 47595, 19797, 62165, 16063, 18022, 209, 107122, 22886, 25302, 13351, 13167, 126243, 28516, 56722, 33475, 25076, 69484,
+    17078, 11044, 10353, 20102, 150984, 6027, 1430, 7428, 42950, 19590, 64717, 4277, 14162, 47, 70408, 4255, 1376, 17242, 2989, 57602, 10198, 12949, 31239, 6921, 55549,
+    11683, 16542, 9001, 23224, 114394, 7762, 3017, 9096, 59256, 8111, 66027, 7896, 16740, 759, 80040, 4535, 3503, 22283, 5790, 51282, 15145, 15955, 14702, 5806, 116408,
+    16985, 44267, 14012, 29808, 384357, 16766, 2553, 10841, 82762, 12716, 148362, 5975, 15003, 226, 105484, 5457, 2795, 43792, 9204, 74233, 11862, 22862, 20415, 8437, 95611,
+    29391, 22633, 28565, 86554, 445576, 15956, 3998, 11254, 89937, 12855, 146456, 10533, 48440, 319, 170116, 8761, 3057, 30964, 4817, 186316, 25292, 57262, 22446, 31953, 165499,
+    31438, 27494, 21613, 58816, 218474, 16056, 4396, 15024, 84791, 13180, 113602, 11918, 24760, 744, 158860, 8715, 5427, 21101, 10291, 128566, 39003, 38980, 19492, 16595, 75888,
+    35485, 24835, 12025, 45314, 296109, 5918, 528, 8385, 57516, 14208, 76342, 4051, 17358, 1939, 117996, 633, 1306, 19596, 9912, 65693, 7684, 29969, 32637, 22488, 65687,
+    74471, 54621, 56847, 189295, 754724, 41021, 12949, 26970, 222220, 40224, 311044, 30885, 76704, 1614, 498814, 14684, 10676, 89908, 24462, 301566, 80265, 91106, 77264, 74020, 338466,
+    22833, 10731, 9610, 43389, 334588, 19935, 5633, 2802, 26217, 24249, 132168, 5165, 44558, 86, 96534, 3483, 1817, 26380, 8394, 60332, 9370, 31880, 21245, 14595, 108890,
+    43678, 15157, 21547, 101180, 470442, 13189, 5449, 6703, 60208, 16826, 109277, 10451, 40214, 207, 151682, 4840, 2684, 20175, 8131, 99629, 18576, 40020, 25542, 31371, 86750,
+    79693, 30781, 31487, 127758, 1173382, 68554, 3896, 9746, 99514, 44950, 178760, 11422, 61830, 991, 450846, 6064, 3657, 80751, 23334, 120209, 22379, 51503, 73428, 40740, 181438,
+    30738, 29556, 21021, 159126, 924459, 4843, 3300, 1798, 144252, 7195, 223319, 2591, 88571, 78, 159836, 4511, 1843, 20295, 2649, 177137, 33610, 165951, 70391, 66519, 149171,
+    27707, 12467, 21813, 26141, 116832, 10825, 7929, 9802, 54801, 6669, 47063, 9777, 17850, 345, 131587, 27724, 6811, 23188, 5305, 167975, 29877, 63173, 15140, 13879, 80728,
+    17872, 8753, 10219, 39933, 178913, 12566, 2335, 8513, 40555, 4340, 84430, 3772, 27074, 805, 119175, 7657, 2406, 18554, 3722, 55933, 13631, 16740, 11962, 8847, 80505,
+    27458, 19166, 17366, 50475, 230049, 12794, 4818, 13510, 77271, 19656, 193286, 11236, 21448, 1331, 160875, 8953, 5816, 46093, 21610, 128794, 20362, 30017, 21069, 17277, 110841
+  ),
+  nrow = 19, ncol = 25, byrow = TRUE
+)
+rownames(ES02Cx) <- c("C10", "C11", "C13", "C14", "C16", "C17", "C18", "C20", "C22", "C23", "C24", "C25", "C26", "C27", "C28", "C29", "C31", "C32", "C33")
+colnames(ES02Cx) <- c("AT", "BE", "BG", "CZ", "DE", "DK", "EE", "EL", "ES", "FI", "FR", "HR", "HU", "IS", "IT", "LT", "LV", "NL", "NO", "PL", "PT", "RO", "SE", "SK", "UK")
+
+library("entropart")
+```
+
+
+# Motivation
+
+## The Question
+
+How to assess spatial structures in discrete space?
+
+Applications: 
+
+- Biodiversity metrics
+
+- Measures of spatial concentration and specialization in economic geography
+
+
+## Tools
+
+Entropy measures:
+
+- Disorder (statistical physics, 19th century)
+
+- Uncertainty [information theory, @Shannon1948]
+
+- Inequalities [@Theil1967]
+
+
+## This Talk
+
+Methods:
+
+- Classical entropy
+
+- Generalized entropy
+
+- Effective numbers
+
+Transfer of the literature of biodiversity to economic geography.
+
+
+# Entropy
+
+## Defining disorder
+
+The origins: Carnot (~1825)
+
+- Second law of thermodynamics
+
+Recall 
+
+  - Zero-sum heat transfer: $\mathrm{d}Q$ (First law)
+  
+  - Hot + Cold $\to$ Tepid: $\mathrm{d}Q/T$ (2^nd^ law). Disorder cannot decrease.
+  
+At this stage, entropy was defined by its variation (etymology: _transformation_).
+
+
+## Boltzmann
+
+\begincols
+  \begincol{.48\textwidth}
+
+Gas as a set of particles.
+
+Each particle may be in several different states.
+
+Entropy is proportional to the logarithm of the number of possible states of the set of particles [1877, translated by @Sharp2015].
+
+Explicitation of the second law.
+
+  \endcol
+  \begincol{.48\textwidth}
+
+![Boltzmann's grave](Images/520px-Zentralfriedhof_Vienna_-_Boltzmann.jpg)
+
+  \endcol
+\endcols
+
+
+## Measuring Disorder
+
+Define a character string:
+
+- Length $n$
+
+- Each letter has a probability
+
+Example: 
+
+- 3 letters, \{a, b, c\},  probabilities (1/2, 1/3, 1/6)
+
+- How many 60-character strings?
+
+- The logarithm of the number of strings is $n$ times entropy: $`r format(60*Shannon(c(1/2, 1/3, 1/6)), digits=2)`$
+
+Shannon's entropy measures the complexity of the distribution of  \{a, b, c\}, independently from $n$: `r format(Shannon(c(1/2, 1/3, 1/6)), digits=3)`
+
+
+## Measuring Uncertainty
+
+An experiment with several outcomes:
+
+- The probability to obtain $r_s$ is $p_s$.
+
+Information function: $I(p_s)$, between $I(0)=+\infty$ and $I(1)=0$.
+
+- Definition: rarity is $1/p_s$.
+
+- The logarithm of rarity is Shannon's information function.
+
+The expectation of the information carried by an individual is Shannon's entropy:
+$$\sum_s{p_s \ln {\frac{1}{p_s}}}$$
+
+
+## Generalized Entropy
+
+Other Entropies: Rényi, Shorrocks... @Tsallis1988
+
+Parametric.
+
+Deformed logarithm: $\ln_q x = \frac{x^{1-q} -1}{1-q}$
+
+```{r lnq, echo=FALSE}
+curve(log(1/x), 0, 1, lty=1, lwd=2, ylab = expression(ln[q](1/x)))
+curve(lnq(1/x, 0), 0, 1, lwd=2, lty = 2, add = TRUE)
+curve(lnq(1/x, 2), 0, 1, lwd=2, lty = 3, add = TRUE)
+legend("topright", 
+      legend = c(expression(ln[0](1/x)), "ln(1/x)",
+      expression(ln[2](1/x))),
+      lty = c(2, 1, 3, 4), inset=  0.02)
+```
+
+
+## Formalisation
+
+Tsallis entropy is the average (deformed, of order $q$) logarithm of rarity.
+
+The order $q$ stresses small or high probabilities.
+
+- Entropy of order 0: the number of possible outcomes (-1)
+
+- Entropy of order 1: Shannon
+
+- Entropy of order 2: Simpson (1-Herfindahl).
+
+
+## Hill Numbers
+
+The number of equiprobable outcomes that have the same entropy as the observed system [@Hill1973].
+
+Exponential of entropy.
+
+Diversity profile:
+
+```{r Paracou, echo=FALSE, out.width = "60%"}
+q.seq <- seq(0, 2, .1)
+P6D<- CommunityProfile(Diversity, Paracou618.MC$Nsi[,1], q.seq)
+P18D<- CommunityProfile(Diversity, Paracou618.MC$Nsi[,2], q.seq)
+plot(P6D, xlab="q", ylab="Diversity", main="", ylim=c(min(P6D$y), max(P18D$y)))
+lines(P18D, lty=2)
+legend("topright", 
+      legend = c("Paracou 6", "Paracou 18"),
+      lty = c(2, 1, 3, 4), inset=  0.02)
+```
+
+
+## Relative Entropy 
+
+Departure of the observed distribution from the expected distribution.
+
+- Kullback-Leibler's divergence
+
+- Theil's relative entropy
+
+Generalization to order $q$ [@Marcon2014a].
+
+If the expected distribution is the average distribution (that of the assemblage) then the relative entropy is the difference between the entropy of the assemblage and that of each system.
+
+To be transformed into Hill numbers later.
+
+
+# Applications
+
+## Similar Questions
+
+\begincols 
+  \begincol{.65\textwidth}
+
+Biodiversity:
+
+Number of trees per species in a forest habitat: biodiversity.
+
+Number of trees per habitat for a given species: ubiquity.
+
+Economics:
+
+Number of employees per industrial sector in a country: diversity oppposed to  specialisation.
+
+Number of employees per country in a sector: ubiquity opposed to spatial concentration.
+
+  \endcol
+  \begincol{.35\textwidth}
+  
+_Application : 19 industries, 25 countries._
+  
+```{r}
+knitr::kable(ES02Cx[1:6, 1:2])
+```
+
+  \endcol
+\endcols
+
+## Absolute Specialisation
+
+Simple tranformation of diversity: 
+
+(Theoretical Maximum - Value) / (Theoretical Maximum - 1)
+
+```{r s, echo=FALSE}
+CPnormalize <- function(CProfile, Max) {
+  NormalizedCP <- CProfile
+  NormalizedCP$y <- (Max-CProfile$y)/(Max-1)
+  if (!is.null(CProfile$high)) NormalizedCP$low <- (Max-CProfile$high)/(Max-1)
+  if (!is.null(CProfile$low)) NormalizedCP$high <- (Max-CProfile$low)/(Max-1)
+  return(NormalizedCP)
+}
+dMax <- nrow(ES02Cx)
+dpIT <- CommunityProfile(Diversity, as.AbdVector(ES02Cx[, "IT"]), Correction="None")
+dpDE <- CommunityProfile(Diversity, as.AbdVector(ES02Cx[, "DE"]), Correction="None")
+dpFR <- CommunityProfile(Diversity, as.AbdVector(ES02Cx[, "FR"]), Correction="None")
+dpIS <- CommunityProfile(Diversity, as.AbdVector(ES02Cx[, "IS"]), Correction="None")
+dpEurope <- CommunityProfile(Diversity, rowSums(ES02Cx), Correction="None")
+spIT <- CPnormalize(dpIT, dMax)
+spDE <- CPnormalize(dpDE, dMax)
+spFR <- CPnormalize(dpFR, dMax)
+spIS <- CPnormalize(dpIS, dMax)
+spEurope <- CPnormalize(dpEurope, dMax)
+plot(spEurope, ylim = c(0, 1), xlab="Order", ylab="Absolute Specialisation")
+lines(spIT, col="green", lty=2, lwd=2)
+lines(spDE, col="blue", lty=3, lwd=2)
+lines(spFR, col="orange", lty=4, lwd=2)
+lines(spIS, col="black", lty=5, lwd=2)
+legend("topleft", 
+      legend = c("Europe", "Italy", "Germany", "France", "Iceland"),
+      lty = 1:5, col= c("black", "green", "blue", "orange", "black"),
+      inset=  0.02)
+```
+
+
+## Partitioning Entropy
+
+Example : Entropy of countries (diversity of sectors)
+
+- Entropy of Europe = Average of (absolute entropy + relative entropy of countries).
+
+Hill Numbers:
+
+- Diversity of Europe = Average diversity of countries x number of effective countries.
+
+Classical partitioning in ecology: $\gamma$, $\alpha$ and $\beta$ diversities.
+
+
+## Example
+
+Diversity of the industrial sectors in Europe:
+
+```{r de}
+# Création d'une metacommunauté
+ES02CtMC <- MetaCommunity(t(ES02Cx), Weights = rowSums(ES02Cx))
+# Calcul des diversités alpha, beta, gamma
+dpES02CtMC <- DivProfile(, ES02CtMC)
+# Figure
+plot(x=dpES02CtMC$Order, y=dpES02CtMC$TotalAlphaDiversity, type="l", lwd=2, xlab="Order", ylab="Diversity", log="y", ylim=c(1, max(dpES02CtMC$GammaDiversity)))
+lines(x=dpES02CtMC$Order, y=dpES02CtMC$TotalBetaDiversity, col="red", lty=2, lwd=2)
+lines(x=dpES02CtMC$Order, y=dpES02CtMC$GammaDiversity, col="blue", lty=3, lwd=2)
+legend("left", 
+      legend = c("Eff. # of Sectors / Country", "Eff. # of Countries", "Eff. # of Sectors"),
+      lty = 1:5, col= c("black", "red", "blue"),
+      inset=  0.02)
+```
+
+
+## Decomposition of Joint Diversity
+
+Diversity of the whole distribution: number of employees per sector and country.
+
+- Effective number of units.
+
+Similar decomposition of entropy and diversity, with one more component: redundancy [@Gregorius2010].
+
+Joint Diversity = Effective Number of sectors per country x number of effective countries x _redundancy of countries_.
+
+
+## Joint Diversity  
+
+Diversity of the European industry:
+
+```{r ce, echo=FALSE}
+ES02CMC <- MetaCommunity(ES02Cx, Weights = colSums(ES02Cx))
+dpES02CMC <- DivProfile(, ES02CMC)
+Djointe <- CommunityProfile(Diversity, as.ProbaVector(ES02Cx))
+RedondanceD <- Djointe$y/dpES02CMC$GammaDiversity
+# Ubiquité totale
+ES02CtMC <- MetaCommunity(t(ES02Cx), Weights = rowSums(ES02Cx))
+dpES02CtMC <- DivProfile(, ES02CtMC)
+RedondanceU <- Djointe$y/dpES02CtMC$GammaDiversity
+# Figure
+par(xpd = T, mar = par()$mar + c(0, 0, 0, 13))
+plot(Djointe, log="y", ylim = c(1, max(Djointe$y)), xlab="Ordre", ylab="Ubiquité")
+lines(x=dpES02CtMC$Order, y=dpES02CtMC$TotalAlphaDiversity, col="blue", lty=2, lwd=2)
+lines(x=dpES02CtMC$Order, y=dpES02CtMC$TotalBetaDiversity, col="red", lty=3, lwd=2)
+#lines(x=dpES02CtMC$Order, y=dpES02CtMC$GammaDiversity, col="green", lty=4, lwd=2)
+lines(x=dpES02CtMC$Order, y=RedondanceU, col="green", lty=4, lwd=2)
+legend(2.2, 10, 
+      legend = c("Joint Diversity", "Eff. # of Sectors / Country", "Eff. # of Countries", "Redundancy"),
+      lty = 1:4, col= c("black", "blue", "red", "green"),
+      inset=  0.02)
+```
+
+# Take Home Messages
+
+## Identical Concepts, Opposite Expression
+
+Diversity $\leftrightarrow$ Specialisation.
+
+Ubiquity $\leftrightarrow$ Concentration.
+
+Possible cause: focus on the positive determinants.
+
+
+## Absolute or Relative
+
+Complementary approaches in the economic litterature.
+
+Unification through Entropy:
+
+- Significance of both is equivalent
+
+- Very different information content
+
+
+## Cross Fertilisation
+
+From physics to ecology: Tsallis's Entropy 
+
+From information theory to ecology: @Kullback1951's divergence.
+
+From information theory to economics: Theil's relative entropy.
+
+In ecology: effective numbers.
+
+In theoretical ecology: redundancy.
+
+
+<!-- A slide for references --> 
+`r if (!knitr:::is_latex_output()) '## References {.smaller}'`
+<!-- Styles for HTML slides -->
+<!-- https://stackoverflow.com/questions/38260799/references-page-truncated-in-rmarkdown-ioslides-presentation/38294541#38294541 -->
+<style>
+  .forceBreak { -webkit-column-break-after: always; break-after: column; }
+  slides > slide { overflow: scroll; }
+  slides > slide:not(.nobackground):after { content: ''; }
+</style>
