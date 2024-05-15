@@ -1,7 +1,7 @@
 ---
-title: "Entropy-based Common Measures of Biodiversity and the Spatial Structure of  Economic Activity"
+title: "Mesures de biodiversité et de concentration spatiale par l’entropie"
 author: "Eric Marcon"
-date: "May 17, 2024"
+date: "17 Mai 2024"
 url: https://EricMarcon.github.io/edmsa-2024/
 github-repo: EricMarcon/edmsa-2024
 bibliography: references.bib
@@ -140,122 +140,128 @@ library("entropart")
 
 # Motivation
 
-## The Question
+## Mesures classiques de biodiversité
 
-How to assess spatial structures in discrete space?
+Inventaire d'arbres de forêt tropicale :
 
-Applications: 
+- $S$ espèces
+- La probabilité qu'un arbre soit de l'espèce $s$ est $p_s$.
 
-- Biodiversity metrics
+Jusqu'à Rényi :
 
-- Measures of spatial concentration and specialization in economic geography
-
-
-## Tools
-
-Entropy measures:
-
-- Disorder (statistical physics, 19th century)
-
-- Uncertainty [information theory, @Shannon1948]
-
-- Inequalities [@Theil1967]
+- Richesse spécifique : $S$
+- "indice de Shannon" : $-\sum_s{p_s \ln(p_s)}$
+- "indice de Simpson" : $\sum_s{p_s (1 - p_s)}$
 
 
-## This Talk
+## Diversité $\alpha$, $\beta$, $\gamma$
 
-Methods:
+Plusieurs niveaux d'observation hiérarchisés [@Whittaker1960].
 
-- Classical entropy
+- Communautés locales : diversité $\alpha$ = nombre moyen d'espèces par communauté
+- Ensemble des communautés : diversité $\gamma$ = nombre total d'espèces
+- Divergence entre les communautés : diversité $\beta$ = au choix
+  - $S_\gamma - S_\alpha$ : nombre d'espèces supplémentaires
+  - $S_\gamma / S_\alpha$ : rapport entre les nombres d'espèces
 
-- Generalized entropy
+## Objectifs
 
-- Effective numbers
+Unifier les mesures de diversité dans le cadre de l'entropie.
 
-Transfer of the literature of biodiversity to economic geography.
+Introduire les nombres de Hill.
+
+Expliciter la diversité $\beta$, décomposer la diversité $\gamma$ en $\alpha$ et $\beta$.
+
+Appliquer cette approche à l'économie géographique :
+
+- Spécialisation : notion opposée à la diversité
+- Concentration géographique : opposée à la diversité des communautés occupées par une espèce
+- Introduire la diversité jointe et la décomposer.
+
+## Notations
+
+Données sous formes de table de contingence :
+
+- $S$ Espèces en ligne, $I$ communautés en colonne, $n$ individus
+- $n_{s,i}$ individus de l'espèce $s$ dans la communauté $i$
+- $p_{s|i} = n_{s,i} / n_s$ : probabilité de l'espèce $s$ dans la communauté $i$, $\sum_s{p_{s|i}} = 1$
+- $w_i$ : poids arbitraire de la communauté $i$
+- $p_s = \sum_i{w_i p_{s|i}}$
+- Cas particulier (sans intérêt pour la biodiversité, très utile ailleurs) : $w_i = n_i / n$
 
 
-# Entropy
+## Exemple de données
 
-## Defining disorder
+Données Eurostat publiques sur les effectifs salariés des secteurs économiques des pays européens.
 
-The origins: Carnot (~1825)
-
-- Second law of thermodynamics
-
-Recall 
-
-  - Zero-sum heat transfer: $\mathrm{d}Q$ (First law)
+19 industries, 25 pays.
   
-  - Hot + Cold $\to$ Tepid: $\mathrm{d}Q/T$ (2^nd^ law). Disorder cannot decrease.
-  
-At this stage, entropy was defined by its variation (etymology: _transformation_).
+```{r}
+kableExtra::kbl(ES02Cx[1:6, 1:7])
+```
+
+- C10 : Manufacture de produits alimentaires, etc.
+- AT : Autriche, etc.
+
+Cas particulier où le poids de chaque pays est son effectif total.
 
 
-## Boltzmann
+# Entropie
 
-\begincols
-  \begincol{.48\textwidth}
+## Historique 1
 
-Gas as a set of particles.
+L'entropie de @Renyi1961 a du succès en écologie dans les années 1960...
 
-Each particle may be in several different states.
+... Mais @Hurlbert1971 publie *The Nonconcept of Species Diversity: A Critique and Alternative Parameters*:
 
-Entropy is proportional to the logarithm of the number of possible states of the set of particles [1877, translated by @Sharp2015].
+- l'entropie est peu intuitive,
+- elle ne garantit pas de relation d'ordre
 
-Explicitation of the second law.
+@Hill1973 introduit les nombres effectifs (devenus Nombres de Hill) :
 
-  \endcol
-  \begincol{.48\textwidth}
-
-![Boltzmann's grave](Images/520px-Zentralfriedhof_Vienna_-_Boltzmann.jpg)
-
-  \endcol
-\endcols
+- nombres d'espèces équiprobables ayant la même entropie que les données
 
 
-## Measuring Disorder
+## Historique 2
 
-Define a character string:
+L'entropie de Rényi est oubliée progressivement, on revient aux "indices" jusqu'à @Jost2006 qui publie *Entropy and Diversity* :
 
-- Length $n$
-
-- Each letter has a probability
-
-Example: 
-
-- 3 letters, \{a, b, c\},  probabilities (1/2, 1/3, 1/6)
-
-- How many 60-character strings?
-
-- The logarithm of the number of strings is $n$ times entropy: $`r format(60*Shannon(c(1/2, 1/3, 1/6)), digits=2)`$
-
-Shannon's entropy measures the complexity of the distribution of  \{a, b, c\}, independently from $n$: `r format(Shannon(c(1/2, 1/3, 1/6)), digits=3)`
+- les "indices" sont des entropies HCDT [@Tsallis1988]
+- la diversité au sens strict est un nombre de Hill
 
 
-## Measuring Uncertainty
+## Formalisation
 
-An experiment with several outcomes:
+L'entropie HCDT d'ordre q est 
 
-- The probability to obtain $r_s$ is $p_s$.
+$$^{q}H(\mathbf{p_s}) = \frac{1}{q-1}\left(1-\sum^S_{s=1}{p^q_s}\right),$$
+où $\mathbf{p_s} = \{p_1, p_2, \dots, p_s, \dots, p_S\}$
 
-Information function: $I(p_s)$, between $I(0)=+\infty$ and $I(1)=0$.
+Elle généralise les mesures traditionnelles :
 
-- Definition: rarity is $1/p_s$.
-
-- The logarithm of rarity is Shannon's information function.
-
-The expectation of the information carried by an individual is Shannon's entropy:
-$$\sum_s{p_s \ln {\frac{1}{p_s}}}$$
+- $^{0}H$ est le nombre d'espèces moins 1
+- $^{1}H$ est l'indice de Shannon
+- $^{2}H$ est l'indice de Simpson
 
 
-## Generalized Entropy
 
-Other Entropies: Rényi, Shorrocks... @Tsallis1988
 
-Parametric.
+## Nouvelle formalisation
 
-Deformed logarithm: $\ln_q x = \frac{x^{1-q} -1}{1-q}$
+L'entropie est l'espérance de l'information apportée par une observation [@Maasoumi1993]
+
+L'information $I(p_s)$ est strictement décroissante et $I(1)=0$.
+
+L'information de Shannon est $\ln(1/p_s)$
+
+L'inverse de la probabilité $p_s$ est appelé *rareté* de l'espèce $s$
+
+$\implies$ L'information de Shannon est le log de la rareté.
+
+
+## Généralisation
+
+Logarithme déformé d'ordre $q$ [@Tsallis1994] : $\ln_q x = \frac{x^{1-q} -1}{1-q}$
 
 ```{r lnq, echo=FALSE}
 curve(log(1/x), 0, 1, lty=1, lwd=2, ylab = expression(ln[q](1/x)))
@@ -267,91 +273,49 @@ legend("topright",
       lty = c(2, 1, 3, 4), inset=  0.02)
 ```
 
-
-## Formalisation
-
-Tsallis entropy is the average (deformed, of order $q$) logarithm of rarity.
-
-The order $q$ stresses small or high probabilities.
-
-- Entropy of order 0: the number of possible outcomes (-1)
-
-- Entropy of order 1: Shannon
-
-- Entropy of order 2: Simpson (1-Herfindahl).
+Alors $^{q}H(\mathbf{p}) = \sum_s{p_s ln_q{(1/p_s)}}$
 
 
-## Hill Numbers
+## Nombres de Hill
 
-The number of equiprobable outcomes that have the same entropy as the observed system [@Hill1973].
+Le nombres de Hill d'ordre $q$ est l'exponentielle déformée de l'entropie [@Marcon2014a] :
+$$e^x_q = [1 + (1 - q)x]^{\frac{1}{1-q}}.$$
 
-Exponential of entropy.
+$$^{q}D(\mathbf{p_s}) = e_q^{^{q}H(\mathbf{p_s})}$$
 
-Diversity profile:
+C'est un nombre effectif d'espèces / secteurs économiques.
 
-```{r Paracou, echo=FALSE, out.width = "60%"}
-q.seq <- seq(0, 2, .1)
-P6D<- CommunityProfile(Diversity, Paracou618.MC$Nsi[,1], q.seq)
-P18D<- CommunityProfile(Diversity, Paracou618.MC$Nsi[,2], q.seq)
-plot(P6D, xlab="q", ylab="Diversity", main="", ylim=c(min(P6D$y), max(P18D$y)))
-lines(P18D, lty=2)
-legend("topright", 
-      legend = c("Paracou 6", "Paracou 18"),
-      lty = c(2, 1, 3, 4), inset=  0.02)
+
+## Profils de Diversité
+
+```{r d, echo=FALSE}
+dpIT <- CommunityProfile(Diversity, as.AbdVector(ES02Cx[, "IT"]), Correction="None")
+dpDE <- CommunityProfile(Diversity, as.AbdVector(ES02Cx[, "DE"]), Correction="None")
+dpFR <- CommunityProfile(Diversity, as.AbdVector(ES02Cx[, "FR"]), Correction="None")
+dpIS <- CommunityProfile(Diversity, as.AbdVector(ES02Cx[, "IS"]), Correction="None")
+dpEurope <- CommunityProfile(Diversity, rowSums(ES02Cx), Correction="None")
+autoplot(dpEurope) + 
+  geom_line(data=data.frame(x=dpIT$x, y=dpIT$y), mapping = aes(x=x, y=y), lty=2, col="green") +
+  geom_line(data=data.frame(x=dpDE$x, y=dpDE$y), mapping = aes(x=x, y=y), lty=3, col="blue") +
+  geom_line(data=data.frame(x=dpFR$x, y=dpFR$y), mapping = aes(x=x, y=y), lty=4, col="orange") +
+  geom_line(data=data.frame(x=dpIS$x, y=dpIS$y), mapping = aes(x=x, y=y), lty=5, col="black") +
+  labs(x="Ordre", y="Diversité")
 ```
 
+Profils de diversité de l'Europe (noir), de l'Italie (vert), de la France (orange), de l'Allemagne (bleu) et de l'Islande (pointillés noirs).
 
-## Relative Entropy 
+## Spécialisation
 
-Departure of the observed distribution from the expected distribution.
+Notion opposée à celle de diversité, utilisée en économie.
 
-- Kullback-Leibler's divergence
+Indice de @Theil1967 : $S - {^{1}H}$
+Indice d'Herfindahl [@Hirschman1964] : $\sum_s{p_s^2} = 1 - {^{2}H}$
 
-- Theil's relative entropy
+Généralisation : spécialisation absolue, par exemple
 
-Generalization to order $q$ [@Marcon2014a].
+$$(S - {^{q}D(\mathbf{p_s})}) / (S - 1)$$
 
-If the expected distribution is the average distribution (that of the assemblage) then the relative entropy is the difference between the entropy of the assemblage and that of each system.
-
-To be transformed into Hill numbers later.
-
-
-# Applications
-
-## Similar Questions
-
-\begincols 
-  \begincol{.65\textwidth}
-
-Biodiversity:
-
-Number of trees per species in a forest habitat: biodiversity.
-
-Number of trees per habitat for a given species: ubiquity.
-
-Economics:
-
-Number of employees per industrial sector in a country: diversity oppposed to  specialisation.
-
-Number of employees per country in a sector: ubiquity opposed to spatial concentration.
-
-  \endcol
-  \begincol{.35\textwidth}
-  
-_Application : 19 industries, 25 countries._
-  
-```{r}
-knitr::kable(ES02Cx[1:6, 1:2])
-```
-
-  \endcol
-\endcols
-
-## Absolute Specialisation
-
-Simple tranformation of diversity: 
-
-(Theoretical Maximum - Value) / (Theoretical Maximum - 1)
+## Profil de spécialisation
 
 ```{r s, echo=FALSE}
 CPnormalize <- function(CProfile, Max) {
@@ -383,23 +347,72 @@ legend("topleft",
       inset=  0.02)
 ```
 
+## Valence
 
-## Partitioning Entropy
+Diversité des pays occupés par un secteur.
 
-Example : Entropy of countries (diversity of sectors)
+En écologie : largeur de niche [@Levins1968] = diversité des habitats occupés par une espèce.
 
-- Entropy of Europe = Average of (absolute entropy + relative entropy of countries).
+Calculée à partir des probabilité qu'un individu du secteur $s$ choisi se trouve dans le pays $i$: $\mathbf{p_{i|s}}$ 
 
-Hill Numbers:
+Les poids des secteurs / espèces sont arbitraires : $\mathbf{w_s}$ 
 
-- Diversity of Europe = Average diversity of countries x number of effective countries.
+Raisonnement identique à celui de la diversité, $\mathbf{p_{i|s}}$ remplace $\mathbf{p_{s|i}}$ 
 
-Classical partitioning in ecology: $\gamma$, $\alpha$ and $\beta$ diversities.
+La concentration spatiale est la notion opposée. On peut la définir comme la spécialisation :
+$$(I - {^{q}D(\mathbf{p_i})}) / (I - 1)$$
+
+## Profil de valence
+
+```{r uC, echo=FALSE}
+library("entropart")
+upC10 <- CommunityProfile(Diversity, as.AbdVector(ES02Cx["C10", ]), Correction="None")
+upC20 <- CommunityProfile(Diversity, as.AbdVector(ES02Cx["C20", ]), Correction="None")
+upC <- CommunityProfile(Diversity, colSums(ES02Cx), Correction="None")
+autoplot(upC) + 
+  geom_line(data=data.frame(x=upC10$x, y=upC10$y), mapping = aes(x=x, y=y), lty=2, col="green") +
+  geom_line(data=data.frame(x=upC20$x, y=upC20$y), mapping = aes(x=x, y=y), lty=3, col="blue") +
+  labs(x="Ordre", y="Valence absolue")
+```
+
+Profils de valence absolue de l'industrie (noir), du secteur C10 (vert) et du secteur C20 (Manufacture de produits chimiques : bleu)
 
 
-## Example
+# Divergence
 
-Diversity of the industrial sectors in Europe:
+## Historique 3
+
+Débat sur la décomposition additive ou multiplicative de la diversité : numéro spécial de *Ecology* [@Ellison2010a]
+
+Deux propositions:
+
+- @Chao2012a : définition ad-hoc de la diversité $\alpha$
+- @Marcon2014a : présenté ici
+
+## Décomposition de l'entropie
+
+L'entropie de Tsallis de la métacommunauté est la somme de la moyenne des entropies des communautés et des divergences entre la métacommunauté et les communautés locales.
+
+$$^{q}_{\gamma}H(\mathbf{p_{s|i}, w_i})=\sum_{s}{p_{s}\ln_q{(1/p_{s})}} = {^{q}_{\alpha}H(\mathbf{p_{s|i}, w_i})} + {^{q}_{\beta}H(\mathbf{p_{s|i}, w_i}})$$
+$$^{q}_{\alpha}H(\mathbf{p_{s|i}, w_i})=\sum_{i}{w_i\sum_{s}{p_{s|i}\ln_q{(1/p_{s|i})}}}$$
+
+
+$$^{q}_{\beta}H(\mathbf{p_{s|i}, w_i})=\sum_{i}{w_i\sum_{s}{p_{s|i}[\ln_q{(1/p_{s|i})-\ln_q{(1/p_{s})]}}}}$$
+- Entropie de l'Europe = Moyenne de (entropie absolue + entropie relative des pays).
+
+
+## Décomposition de la diversité
+
+La décomposition de la diversité est multiplicative.
+
+$$^{q}_{\gamma}D(\mathbf{p_{s|i}, w_i})= {^{q}_{\alpha}D(\mathbf{p_{s|i}, w_i})} \times {^{q}_{\beta}D(\mathbf{p_{s|i}, w_i}})$$
+
+- Nombre effectif de secteurs de l'Europe = Nombre effectif de secteur par pays x nombre effectif de pays.
+
+Attention : la diversité $\beta$ n'est l'exponentielle de la divergence qu'à l'ordre 1 (Kullback-Leibler).
+
+
+## Diversité des secteurs industriels en Europe
 
 ```{r de}
 # Création d'une metacommunauté
@@ -417,20 +430,26 @@ legend("left",
 ```
 
 
-## Decomposition of Joint Diversity
+# Diversité jointe
 
-Diversity of the whole distribution: number of employees per sector and country.
+## Définitions
 
-- Effective number of units.
+Diversité de toute la distribution des $p_{s,i}$ : nombre d'employés par secteur et pays.
 
-Similar decomposition of entropy and diversity, with one more component: redundancy [@Gregorius2010].
+$$^{q}_{\sigma}H(\mathbf{p_{s,i}})=\sum_{s,i}{p_{s,i}\ln_q{(1/p_{s,i})}}$$
 
-Joint Diversity = Effective Number of sectors per country x number of effective countries x _redundancy of countries_.
+$$^{q}_{\sigma}D(\mathbf{p_{s,i}}) = e_q^{^{q}_{\sigma}H(\mathbf{p})}$$
+Nombre effectif de secteurs x pays, sans interprétation utile.
 
 
-## Joint Diversity  
+## Décomposition
 
-Diversity of the European industry:
+Décomposition similaire de l'entropie et de la diversité, avec une composante supplémentaire : la redondance [@Gregorius2010].
+
+Diversité jointe = Nombre effectif de secteurs par pays x nombre de pays effectifs x _redondance des pays_.
+
+
+## Diversité de l'industrie européenne
 
 ```{r ce, echo=FALSE}
 ES02CMC <- MetaCommunity(ES02Cx, Weights = colSums(ES02Cx))
@@ -454,39 +473,50 @@ legend(2.2, 10,
       inset=  0.02)
 ```
 
-# Take Home Messages
 
-## Identical Concepts, Opposite Expression
+# Conclusion
 
-Diversity $\leftrightarrow$ Specialisation.
+## Spécificités disciplinaires
 
-Ubiquity $\leftrightarrow$ Concentration.
+Voir @Marcon2019.
 
-Possible cause: focus on the positive determinants.
+Points de vue :
+
+- Diversité ou spécialisation
+- Valence ou concentration spatiale
+
+Pratiques :
+
+- Données exhaustives en économie
+- Échantillons en écologie : 
+  - poids arbitraires
+  - pas de diversité jointe, pas de concentration spatiale
+
+## Estimation
+
+En écologie, dans des systèmes très divers, les espèces rares ne sont pas échantillonnées.
+
+Littérature abondante sur l'estimation de l'entropie à partir de données incomplètes. Revue : @Marcon2015a.
+
+  
+## Littératures parallèles
+
+Entropie HCDT découverte trois fois : @Havrda1967, @Daroczy1970, @Tsallis1988
+
+Entropie de Shannon redécouverte par @Theil1967 (concentration absolue)
+
+Divergence de @Kullback1951 redécouverte par @Theil1967 (concentration relative), @Mori2005 et @Alonso-Villar2013
 
 
-## Absolute or Relative
+## Autres approches
 
-Complementary approaches in the economic litterature.
+- Pour les collectionneurs : entropie de Simpson généralisée [@Grabchak2016] d'ordre $r < n$
+  - Fonction d'information : $I(p_s) = (1 - p_s)^r$. 
+  - Interprétation: probabilité que le (r + 1)^ème^ individu soit d'une nouvelle espèce.
+  - Non décomposable.
 
-Unification through Entropy:
-
-- Significance of both is equivalent
-
-- Very different information content
-
-
-## Cross Fertilisation
-
-From physics to ecology: Tsallis's Entropy 
-
-From information theory to ecology: @Kullback1951's divergence.
-
-From information theory to economics: Theil's relative entropy.
-
-In ecology: effective numbers.
-
-In theoretical ecology: redundancy.
+- En redéfinissant la rareté : entropie de @Ricotta2006b
+  - Rareté : $1/\mathbf{Z p_s}$ où $\mathbf{Z}$ est une matrice de similarité entre espèces.
 
 
 <!-- A slide for references --> 
