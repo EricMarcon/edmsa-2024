@@ -498,7 +498,9 @@ En écologie, dans des systèmes très divers, les espèces rares ne sont pas é
 
 Littérature abondante sur l'estimation de l'entropie à partir de données incomplètes. Revue : @Marcon2015a.
 
+Les données d'abondance sont indispensables, alors que les fréquences suffisaient dans toute la présentation.
   
+
 ## Littératures parallèles
 
 Entropie HCDT découverte trois fois : @Havrda1967, @Daroczy1970, @Tsallis1988
@@ -515,7 +517,7 @@ Divergence de @Kullback1951 redécouverte par @Theil1967 (concentration relative
   - Interprétation: probabilité que le (r + 1)^ème^ individu soit d'une nouvelle espèce.
   - Non décomposable.
 
-- En redéfinissant la rareté : entropie de @Ricotta2006b
+- En redéfinissant la rareté : entropie de @Ricotta2006b, diversité de @Leinster2012
   - Rareté : $1/\mathbf{Z p_s}$ où $\mathbf{Z}$ est une matrice de similarité entre espèces.
 
 
