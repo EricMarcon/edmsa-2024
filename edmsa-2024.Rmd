@@ -74,7 +74,7 @@ knitr::opts_chunk$set(
   warning = FALSE,    # Show/Hide warnings
   message = FALSE,    # Show/Hide messages
   # Figure alignment and size
-  fig.align = 'center', out.width = '80%',
+  fig.align = 'center', out.width = '100%',
   # Graphic devices (ragg_png is better than standard png)
   dev = c("ragg_png", "pdf"),
   # Code chunk format
@@ -208,14 +208,14 @@ Cas particulier où le poids de chaque pays est son effectif total.
 
 L'entropie de @Renyi1961 a du succès en écologie dans les années 1960...
 
-... Mais @Hurlbert1971 publie *The Nonconcept of Species Diversity: A Critique and Alternative Parameters*:
+... Mais @Hurlbert1971 publie *The Nonconcept of Species Diversity: A Critique and Alternative Parameters* :
 
 - l'entropie est peu intuitive,
 - elle ne garantit pas de relation d'ordre
 
 @Hill1973 introduit les nombres effectifs (devenus Nombres de Hill) :
 
-- nombres d'espèces équiprobables ayant la même entropie que les données
+- nombres d'espèces équiprobables ayant la même entropie que les données [concept de @Wright1931]
 
 
 ## Historique 2
@@ -304,8 +304,8 @@ Profils de diversité de l'Europe (noir), de l'Italie (vert), de la France (oran
 
 Notion opposée à celle de diversité, utilisée en économie.
 
-Indice de @Theil1967 : $S - {^{1}H}$
-Indice d'Herfindahl [@Hirschman1964] : $\sum_s{p_s^2} = 1 - {^{2}H}$
+- Indice de @Theil1967 : $S - {^{1}H}$
+- Indice d'Herfindahl [@Hirschman1964] : $\sum_s{p_s^2} = 1 - {^{2}H}$
 
 Généralisation : spécialisation absolue, par exemple
 
@@ -349,7 +349,7 @@ Diversité des pays occupés par un secteur.
 
 En écologie : largeur de niche [@Levins1968] = diversité des habitats occupés par une espèce.
 
-Calculée à partir des probabilité qu'un individu du secteur $s$ choisi se trouve dans le pays $i$: $\mathbf{p_{i|s}}$ 
+Calculée à partir des probabilités qu'un individu du secteur $s$ choisi se trouve dans le pays $i$: $\mathbf{p_{i|s}}$ 
 
 Les poids des secteurs / espèces sont arbitraires : $\mathbf{w_s}$ 
 
@@ -389,11 +389,20 @@ Deux propositions:
 
 L'entropie de Tsallis de la métacommunauté est la somme de la moyenne des entropies des communautés et des divergences entre la métacommunauté et les communautés locales.
 
-$$^{q}_{\gamma}H(\mathbf{p_{s|i}, w_i})=\sum_{s}{p_{s}\ln_q{(1/p_{s})}} = {^{q}_{\alpha}H(\mathbf{p_{s|i}, w_i})} + {^{q}_{\beta}H(\mathbf{p_{s|i}, w_i}})$$
+$$^{q}_{\gamma}H(\mathbf{p_{s|i}, w_i}) = \sum_{s}{p_{s}\ln_q{(1/p_{s})}}$$
+
+$$^{q}_{\gamma}H(\mathbf{p_{s|i}, w_i}) = {^{q}_{\alpha}H(\mathbf{p_{s|i}, w_i})} + {^{q}_{\beta}H(\mathbf{p_{s|i}, w_i}})$$
+
+## Décomposition de l'entropie
+
+L'entropie $\alpha$ est la moyenne des entropies des communautés :
+
 $$^{q}_{\alpha}H(\mathbf{p_{s|i}, w_i})=\sum_{i}{w_i\sum_{s}{p_{s|i}\ln_q{(1/p_{s|i})}}}$$
 
+L'entropie $\beta$ est la moyenne des divergences [@Tsallis1998a] entre les communautés et la métacommunauté :
 
-$$^{q}_{\beta}H(\mathbf{p_{s|i}, w_i})=\sum_{i}{w_i\sum_{s}{p_{s|i}[\ln_q{(1/p_{s|i})-\ln_q{(1/p_{s})]}}}}$$
+
+$$^{q}_{\beta}H(\mathbf{p_{s|i}, w_i})=\sum_{i}{w_i\sum_{s}{p_{s|i}[\ln_q{(1/p_{s})-\ln_q{(1/p_{s|i})]}}}}$$
 - Entropie de l'Europe = Moyenne de (entropie absolue + entropie relative des pays).
 
 
