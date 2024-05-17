@@ -239,9 +239,6 @@ Elle généralise les mesures traditionnelles :
 - $^{1}H$ est l'indice de Shannon
 - $^{2}H$ est l'indice de Simpson
 
-
-
-
 ## Nouvelle formalisation
 
 L'entropie est l'espérance de l'information apportée par une observation [@Maasoumi1993]
@@ -259,7 +256,7 @@ $\implies$ L'information de Shannon est le log de la rareté.
 
 Logarithme déformé d'ordre $q$ [@Tsallis1994] : $\ln_q x = \frac{x^{1-q} -1}{1-q}$
 
-```{r lnq, echo=FALSE}
+```{r lnq, echo=FALSE, out.width='80%'}
 curve(log(1/x), 0, 1, lty=1, lwd=2, ylab = expression(ln[q](1/x)))
 curve(lnq(1/x, 0), 0, 1, lwd=2, lty = 2, add = TRUE)
 curve(lnq(1/x, 2), 0, 1, lwd=2, lty = 3, add = TRUE)
@@ -284,7 +281,7 @@ C'est un nombre effectif d'espèces / secteurs économiques.
 
 ## Profils de Diversité
 
-```{r d, echo=FALSE}
+```{r d, echo=FALSE, out.width='80%'}
 dpIT <- CommunityProfile(Diversity, as.AbdVector(ES02Cx[, "IT"]), Correction="None")
 dpDE <- CommunityProfile(Diversity, as.AbdVector(ES02Cx[, "DE"]), Correction="None")
 dpFR <- CommunityProfile(Diversity, as.AbdVector(ES02Cx[, "FR"]), Correction="None")
@@ -304,7 +301,7 @@ Profils de diversité de l'Europe (noir), de l'Italie (vert), de la France (oran
 
 Notion opposée à celle de diversité, utilisée en économie.
 
-- Indice de @Theil1967 : $S - {^{1}H}$
+- Indice de @Theil1967 : $\ln S - {^{1}H}$
 - Indice d'Herfindahl [@Hirschman1964] : $\sum_s{p_s^2} = 1 - {^{2}H}$
 
 Généralisation : spécialisation absolue, par exemple
@@ -360,7 +357,7 @@ $$(I - {^{q}D(\mathbf{p_i})}) / (I - 1)$$
 
 ## Profil de valence
 
-```{r uC, echo=FALSE}
+```{r uC, echo=FALSE, out.width='80%'}
 library("entropart")
 upC10 <- CommunityProfile(Diversity, as.AbdVector(ES02Cx["C10", ]), Correction="None")
 upC20 <- CommunityProfile(Diversity, as.AbdVector(ES02Cx["C20", ]), Correction="None")
